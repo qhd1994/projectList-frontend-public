@@ -133,6 +133,7 @@
             const filterButtonsContainer = document.getElementById('filter-buttons');
 
             let allProjects = [];
+            let modalOpen = false; // 모달 열림 상태 추적 변수
 
             // Fetch projects from the API
             async function fetchProjects() {
@@ -153,8 +154,8 @@
             function renderProjects(projectsToRender) {
                 projectGrid.innerHTML = ''; // Clear existing content or skeletons
                 if (projectsToRender.length === 0) {
-                     projectGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full">해당 상태의 프로젝트가 없습니다.</p>`;
-                     return;
+                    projectGrid.innerHTML = `<p class="text-center text-gray-500 col-span-full">해당 상태의 프로젝트가 없습니다.</p>`;
+                    return;
                 }
 
                 projectsToRender.forEach(project => {
@@ -204,25 +205,40 @@
                             <p class="text-gray-700 whitespace-pre-wrap">${project.description}</p>
                         </div>
                         <div>
-                             <h4 class="font-semibold text-lg mb-2">프로젝트 정보</h4>
-                             <ul class="text-gray-700 space-y-2">
+                            <h4 class="font-semibold text-lg mb-2">프로젝트 정보</h4>
+                            <ul class="text-gray-700 space-y-2">
                                 <li><strong>상태:</strong> ${project.status}</li>
                                 <li><strong>기간:</strong> ${startDate} ~ ${endDate}</li>
-                             </ul>
-                             <div class="mt-4 flex space-x-4">
+                            </ul>
+                            <div class="mt-4 flex space-x-4">
                                 ${project.projectLink ? `<a href="${project.projectLink}" target="_blank" class="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-external-link-alt"></i> 프로젝트 보기</a>` : ''}
                                 ${project.githubLink ? `<a href="${project.githubLink}" target="_blank" class="text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fab fa-github"></i> GitHub</a>` : ''}
-                             </div>
+                            </div>
                         </div>
                     </div>
 
                     <div>
-                         <h4 class="font-semibold text-lg mb-2">사용 기술</h4>
-                         <div class="flex flex-wrap">${technologiesHTML}</div>
+                        <h4 class="font-semibold text-lg mb-2">사용 기술</h4>
+                        <div class="flex flex-wrap">${technologiesHTML}</div>
                     </div>
                 `;
                 modal.classList.remove('hidden');
                 document.body.classList.add('overflow-hidden'); // Prevent background scroll
+                
+                // 모달이 열릴 때 히스토리 스택에 상태 추가
+                if (!modalOpen) {
+                    history.pushState({ modalOpen: true, projectId: projectId }, '', '#project-modal-open');
+                    modalOpen = true;
+                }
+            }
+
+            // 모달 닫기 함수
+            function closeModal() {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden'); // Allow background scroll
+                if (modalOpen) {
+                    modalOpen = false;
+                }
             }
 
             // Event Listeners
@@ -234,13 +250,20 @@
             });
 
             closeModalBtn.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden'); // Allow background scroll
+                // 'X' 버튼 클릭 시 모달 닫고 히스토리 되돌리기
+                closeModal();
+                if (history.state && history.state.modalOpen) {
+                    history.back(); // 모달을 열었을 때 추가한 히스토리 상태를 되돌림
+                }
             });
+
+            // 모달 외부 클릭 시 닫기
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    document.body.classList.remove('overflow-hidden');
+                    closeModal();
+                    if (history.state && history.state.modalOpen) {
+                        history.back(); // 모달을 열었을 때 추가한 히스토리 상태를 되돌림
+                    }
                 }
             });
             
@@ -257,6 +280,27 @@
                     renderProjects(filteredProjects);
                 }
             });
+
+            // 브라우저 뒤로가기 버튼 처리
+            window.addEventListener('popstate', (event) => {
+                // modalOpen 상태 변수를 사용하여 모달이 열려있는지 확인
+                // 그리고 히스토리 상태에 modalOpen 플래그가 있는지 확인
+                if (modalOpen && (!event.state || !event.state.modalOpen)) {
+                    closeModal();
+                    // 사용자가 뒤로가기 버튼을 눌러 모달이 닫혔으므로,
+                    // 현재 URL을 다시 push하여 실제 페이지 이동을 막음.
+                    // 이렇게 하지 않으면 모달 닫힌 후 페이지가 뒤로 이동함.
+                    history.pushState(null, '', window.location.pathname + window.location.search);
+                } else if (event.state && event.state.modalOpen && !modalOpen) {
+                    // 간혹 popstate가 여러번 트리거되거나, 모달이 닫힌 상태에서 모달 히스토리로 돌아올 경우
+                    // 모달을 다시 열어주는 로직이 필요할 수 있으나, 현재는 뒤로가기 시 닫기만 처리
+                }
+            });
+
+            // 페이지 로드 시 URL에 #project-modal-open이 있으면 모달 상태 초기화 (간혹 남아있을 경우)
+            if (window.location.hash === '#project-modal-open') {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
 
             // Initial fetch
             fetchProjects();
