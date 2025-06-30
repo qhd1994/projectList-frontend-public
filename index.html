@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project List</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9D%3C/text%3E%3Csvg%3E" />
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN 링크, integrity 속성 수정 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     <style>
@@ -151,12 +153,15 @@
                     else if (statusText === '계획중') statusClass = 'status-planned';
 
                     card.innerHTML = `
-                        <img src="${project.imageUrl}" alt="${project.title}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://via.placeholder.com/400x250/cccccc/FFFFFF?text=Image+Not+Found';">
+                        <img src="${project.imageUrl || 'https://placehold.co/400x250/cccccc/FFFFFF?text=Image+Not+Found'}" alt="${project.title}" class="w-full h-48 object-cover">
                         <div class="p-6">
-                            <h3 class="text-xl font-bold mb-2">${project.title}</h3>
-                            <p class="text-gray-600 text-sm mb-4 h-10 overflow-hidden">${project.description}</p>
                             <div class="flex justify-between items-center">
                                 <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <h3 class="text-xl font-bold mt-2">${project.title}</h3>
+                            <p class="mt-2 text-gray-600 text-sm h-10 overflow-hidden">${project.description}</p>
+                            <div class="mt-2 text-sm text-gray-500">
+                                <span class="font-medium">기술:</span> ${project.technologies}
                             </div>
                         </div>
                     `;
@@ -172,32 +177,27 @@
                 const technologiesHTML = project.technologies.split(',').map(tech => `<span class="tag">${tech.trim()}</span>`).join('');
                 const startDate = project.startDate ? new Date(project.startDate).toLocaleDateString('ko-KR') : '미정';
                 const endDate = project.endDate ? new Date(project.endDate).toLocaleDateString('ko-KR') : '진행중';
-                
                 modalBody.innerHTML = `
                     <h2 class="text-3xl md:text-4xl font-bold mb-4">${project.title}</h2>
-                    <img src="${project.imageUrl}" alt="${project.title}" class="w-full h-64 object-cover rounded-lg mb-6" onerror="this.onerror=null;this.src='https://via.placeholder.com/600x300/cccccc/FFFFFF?text=Image+Not+Found';">
-                    
-                    <div class="grid md:grid-cols-3 gap-6 mb-6">
-                        <div class="md:col-span-2">
-                            <h4 class="font-semibold text-lg mb-2">프로젝트 설명</h4>
-                            <p class="text-gray-700 whitespace-pre-wrap">${project.description}</p>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-lg mb-2">프로젝트 정보</h4>
-                            <ul class="text-gray-700 space-y-2">
-                                <li><strong>상태:</strong> ${project.status}</li>
-                                <li><strong>기간:</strong> ${startDate} ~ ${endDate}</li>
-                            </ul>
-                            <div class="mt-4 flex space-x-4">
-                                ${project.projectLink ? `<a href="${project.projectLink}" target="_blank" class="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-external-link-alt"></i> 프로젝트 보기</a>` : ''}
-                                ${project.githubLink ? `<a href="${project.githubLink}" target="_blank" class="text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fab fa-github"></i> GitHub</a>` : ''}
-                            </div>
-                        </div>
+                    <img src="${project.imageUrl || 'https://placehold.co/800x450/cccccc/FFFFFF?text=Image+Not+Found'}" alt="${project.title}" class="w-full h-64 object-cover rounded-lg mb-6">
+                    <div class="md:col-span-2">
+                        <h4 class="font-semibold text-lg mb-2">프로젝트 설명</h4>
+                        <p class="text-gray-700 whitespace-pre-wrap">${project.description}</p>
                     </div>
-
-                    <div>
+                    <div class="mt-6">
                         <h4 class="font-semibold text-lg mb-2">사용 기술</h4>
                         <div class="flex flex-wrap">${technologiesHTML}</div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-semibold text-lg mb-2">프로젝트 정보</h4>
+                        <ul class="text-gray-700 space-y-2">
+                            <li><strong>상태:</strong> ${project.status}</li>
+                            <li><strong>기간:</strong> ${startDate} ~ ${endDate}</li>
+                        </ul>
+                        <div class="mt-4 flex space-x-4">
+                            ${project.projectLink ? `<a href="${project.projectLink}" target="_blank" class="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fas fa-external-link-alt"></i> 프로젝트 보기</a>` : ''}
+                            ${project.githubLink ? `<a href="${project.githubLink}" target="_blank" class="text-gray-700 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg transition flex items-center gap-2"><i class="fab fa-github"></i> GitHub</a>` : ''}
+                        </div>
                     </div>
                 `;
                 modal.classList.remove('hidden');
@@ -207,6 +207,12 @@
                 if (!modalOpen) {
                     history.pushState({ modalOpen: true, projectId: projectId }, '', '#project-modal-open');
                     modalOpen = true;
+                }
+
+                // 모달 내용의 스크롤을 맨 위로 이동
+                const modalBodyScrollable = document.getElementById('modal-body-scrollable');
+                if (modalBodyScrollable) {
+                    modalBodyScrollable.scrollTop = 0;
                 }
             }
 
